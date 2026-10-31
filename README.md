@@ -1,314 +1,291 @@
-# EduGenie 🔮
+# EduGenie
 
-EduGenie is a production-ready, high-fidelity AI-powered Educational Assistant designed to support students and self-learners. Powered by FastAPI, Google Gemini 1.5 Pro, and local HuggingFace LaMini-Flan-T5 models, it provides tutoring, concept explanations, interactive multiple-choice quiz generators, note summarization, and personalized learning roadmaps.
+**EduGenie** is an AI-powered educational assistant that helps students
+and self-learners study more effectively through question answering,
+concept explanations, quiz generation, note summarization, and
+personalized study roadmaps.
 
----
+**Live application:** https://edu-genai.onrender.com
 
-## Key Features
+## Overview
 
-1. **Educational Q&A**: Submit complex academic questions and get detailed, step-by-step educational answers.
-2. **Concept Explainer**: Explain concepts tailored for three learning stages:
-   - **Beginner**: Simplifies terminology and uses everyday analogies.
-   - **Intermediate**: Connects concepts and details real-world use cases.
-   - **Advanced**: Deep-dives into technical architectures, comparisons, and mathematics.
-3. **Interactive Quiz Generator**: Dynamically generates custom multiple-choice quizzes complete with interactive selection states and detailed answer explanations.
-4. **Note Summarizer**: Distills textbook notes or chapters into Concise paragraphs, Detailed outlines, or clean Bullet-point summaries.
-5. **Study Roadmap**: Formulates structured study pathways, timelines, curated resource guides, and practice challenges based on target goals and current experience levels.
-6. **Dual-Model Coordination**: Automatically routes queries between Google Gemini (cloud) and LaMini-Flan-T5 (local pipeline), featuring intelligent fallbacks in case of credentials omission, format issues, or runtime disruptions.
+EduGenie combines a FastAPI backend with AI model integrations to
+provide learning support through a responsive web interface. It is
+designed to make learning more accessible by adapting explanations to
+different experience levels and helping learners organize their study
+plans.
 
----
+## Features
 
-## System Architecture
+-   **Educational Q&A:** Get detailed answers to academic questions.
+-   **Concept explanations:** Explore topics at beginner, intermediate,
+    or advanced levels.
+-   **Quiz generation:** Generate multiple-choice quizzes with answer
+    options and explanations.
+-   **Note summarization:** Convert study material into concise
+    paragraphs, detailed outlines, or bullet-point summaries.
+-   **Personalized study roadmaps:** Generate structured learning
+    phases, suggested resources, timelines, and practice activities
+    based on a learner's goals and skill level.
+-   **Model coordination and fallback:** Route requests between the
+    configured Google Gemini integration and a local Hugging Face
+    LaMini-Flan-T5 pipeline, with fallback handling where supported.
 
-EduGenie is built on a clean, decoupled layer architecture separating presentation, endpoints, business coordination, and generative models:
+## Technology Stack
 
-```mermaid
-graph TD
-    User([Student/User]) -->|Interacts| UI[Responsive HTML5 / CSS3 / Vanilla JS]
-    UI -->|AJAX Post Requests| API[FastAPI Server]
-    
-    subgraph FastAPI Backend App
-        API -->|Route Payloads| Routes[Routes Layer: qa, explain, quiz, summarize, recommend]
-        Routes -->|Validation & Parsing| Services[Education Coordination Service]
-        Services -->|Isolated Context| Prompts[Decoupled Prompt Templates]
-        Services -->|Model Selection & Fallbacks| AILayer[AI Clients Layer]
-        
-        subgraph AI Layer
-            AILayer -->|Google API Call| GeminiClient[Gemini Client - Cloud]
-            AILayer -->|Transformers Pipeline| LaMiniClient[LaMini Client - Local CPU/GPU]
-        end
-    end
-    
-    GeminiClient -->|API Response| ResponseFormatter[Response Formatter & JSON Extractor]
-    LaMiniClient -->|Inference Output| ResponseFormatter
-    
-    ResponseFormatter -->|Structured Models| Services
-    Services -->|Valid JSON / Clean Text| UI
+  Area              Technologies
+  ----------------- -------------------------------------------
+  Backend           Python, FastAPI
+  Data validation   Pydantic
+  Cloud AI          Google Gemini API
+  Local AI          Hugging Face Transformers, LaMini-Flan-T5
+  Frontend          HTML5, CSS3, JavaScript
+  API server        Uvicorn
+  Configuration     `python-dotenv`
+  Testing           `unittest`, FastAPI `TestClient`
+
+## Architecture
+
+The application separates API routing, education-related business logic,
+prompt templates, and AI model clients.
+
+``` mermaid
+flowchart TD
+    User[Student / User] --> UI[Web Interface]
+    UI --> API[FastAPI Application]
+    API --> Routes[API Routes]
+    Routes --> Service[Education Service]
+    Service --> Prompts[Prompt Templates]
+    Service --> AI[AI Client Layer]
+    AI --> Gemini[Google Gemini API]
+    AI --> Local[LaMini-Flan-T5 Pipeline]
+    Gemini --> Formatter[Response Formatting]
+    Local --> Formatter
+    Formatter --> Service
+    Service --> UI
 ```
 
----
+## Project Structure
 
-## Folder Explanation
-
-```
+``` text
 EduGenie/
 ├── app/
-│   ├── main.py                 # FastAPI initialization, CORS, global error filters & root views
-│   ├── config.py               # Environment configuration loader using python-dotenv
-│   ├── routes/                 # Endpoint routers mapping schemas to services
+│   ├── main.py
+│   ├── config.py
+│   ├── routes/
 │   │   ├── qa.py
 │   │   ├── explain.py
 │   │   ├── quiz.py
 │   │   ├── summarize.py
 │   │   └── recommend.py
 │   ├── services/
-│   │   └── education_service.py # Orchestrates prompt compilation, fallbacks, and model clients
-│   ├── ai/                     # LLM service implementations
-│   │   ├── gemini.py           # Google Generative AI integration with Flash fallbacks
-│   │   └── lamini.py           # Lazy-loading HuggingFace pipeline for local model inference
-│   ├── prompts/                # Isolated prompt templates (decoupled from endpoints)
-│   │   ├── qa.py
-│   │   ├── explain.py
-│   │   ├── quiz.py
-│   │   ├── summary.py
-│   │   └── recommend.py
+│   │   └── education_service.py
+│   ├── ai/
+│   │   ├── gemini.py
+│   │   └── lamini.py
+│   ├── prompts/
 │   ├── models/
-│   │   └── schemas.py          # Pydantic request and response contracts
-│   ├── utils/                  # Helper modules
-│   │   ├── logger.py           # Integrated file + console logger
-│   │   ├── validators.py       # Input bounds and size validators
-│   │   └── formatter.py        # Safe LLM JSON extraction utilities
+│   │   └── schemas.py
+│   ├── utils/
 │   ├── templates/
-│   │   └── index.html          # Semantic HTML dashboard template
-│   └── static/                 # Static asset directories
+│   │   └── index.html
+│   └── static/
 │       ├── css/
-│       │   └── style.css       # High-fidelity glassmorphic layout stylesheet
 │       └── js/
-│           └── app.js          # Tab routing, AJAX calls, interactive quiz elements, roadmap compilers
-├── .env                        # Local active environment secrets (Git ignored)
-├── .env.example                # Example template configuration
-├── .gitignore                  # Git untracked settings
-├── requirements.txt            # System dependency packages list
-├── verify_endpoints.py         # Mocked API endpoint test validation suite
-└── README.md                   # Project documentation
+├── .env.example
+├── .gitignore
+├── requirements.txt
+├── verify_endpoints.py
+└── README.md
 ```
 
----
-
-## Installation & Setup
+## Getting Started
 
 ### Prerequisites
-- Python 3.11 or higher (Python 3.14.1 recommended)
-- Git (optional)
 
-### Step 1: Clone or Copy the Repository
-Navigate to the root directory where the code is located:
-```bash
-cd "c:/Users/sivan/OneDrive/Desktop/Partnr Network/AI App/EduGenie"
+-   Python 3.11 or later
+-   pip
+-   Git, if cloning the repository
+
+### 1. Clone the repository
+
+Replace `<repository-url>` with the URL of your GitHub repository.
+
+``` bash
+git clone <repository-url>
+cd EduGenie
 ```
 
-### Step 2: Create a Virtual Environment
-If not already created, spin up a Python virtual environment:
-```bash
+If you already have the project folder, open a terminal in that folder
+and continue to the next step.
+
+### 2. Create a virtual environment
+
+``` bash
 python -m venv .venv
 ```
 
-### Step 3: Activate Environment & Install Dependencies
-Activate the virtual environment and install standard requirements:
-**On Windows PowerShell:**
-```powershell
+### 3. Activate the virtual environment
+
+**Windows PowerShell**
+
+``` powershell
 .venv\Scripts\Activate.ps1
-pip install -r requirements.txt
 ```
-**On Windows Command Prompt (CMD):**
-```cmd
+
+**Windows Command Prompt**
+
+``` cmd
 .venv\Scripts\activate.bat
+```
+
+**macOS or Linux**
+
+``` bash
+source .venv/bin/activate
+```
+
+### 4. Install dependencies
+
+``` bash
+python -m pip install --upgrade pip
 pip install -r requirements.txt
 ```
 
-*Note: Torch and Transformers will download packages to support local models. Standard wheels are automatically fetched by pip.*
+The local model integration may download model files and additional
+dependencies on first use.
 
-### Step 4: Configure API Credentials
-1. Duplicate `.env.example` as `.env`:
-   ```bash
-   cp .env.example .env
-   ```
-2. Open `.env` and fill in your Google Gemini API key:
-   ```env
-   GEMINI_API_KEY=AIzaSyYourActualKeyHere
-   ```
-   *You can get a free developer key from [Google AI Studio](https://aistudio.google.com/).*
+### 5. Configure environment variables
 
----
+Create a `.env` file from the provided example.
 
-## Running Locally
+**Windows PowerShell**
 
-To start the FastAPI web server, run:
-```bash
-.venv\Scripts\python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+``` powershell
+Copy-Item .env.example .env
 ```
 
-Once started:
-1. Open your browser and navigate to **`http://localhost:8000`** to interact with the dashboard.
-2. If debug mode is active, view the interactive Swagger API documentation at **`http://localhost:8000/docs`**.
+**macOS or Linux**
 
----
+``` bash
+cp .env.example .env
+```
 
-## Endpoint API Reference
+Add your Google Gemini API key to `.env` using the variable expected by
+the application:
 
-All JSON requests require the header `"Content-Type: application/json"`.
+``` env
+GEMINI_API_KEY=your_gemini_api_key
+```
 
-### 1. Question Answering
-- **Path**: `POST /qa`
-- **Request Body**:
-  ```json
-  {
-    "question": "Explain the difference between compiler and interpreter.",
-    "model_preference": "gemini" 
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "question": "Explain the difference between compiler and interpreter.",
-    "answer": "Compilers translate code entirely before execution, while interpreters...",
-    "model_used": "Gemini 1.5 Pro"
-  }
-  ```
+Get an API key from [Google AI Studio](https://aistudio.google.com/).
 
-### 2. Concept Explainer
-- **Path**: `POST /explain`
-- **Request Body**:
-  ```json
-  {
+Keep credentials private. Do not commit `.env` or API keys to GitHub.
+Configure environment variables separately in your deployment
+environment.
+
+### 6. Run the application locally
+
+``` bash
+python -m uvicorn app.main:app --reload --host 127.0.0.1 --port 8000
+```
+
+Open the following URLs in your browser:
+
+-   Web application: http://localhost:8000
+-   Interactive API documentation: http://localhost:8000/docs
+-   Health check: http://localhost:8000/health
+
+## API Reference
+
+The API accepts JSON request bodies for the endpoints below. Include
+`Content-Type: application/json` when sending JSON requests.
+
+  -----------------------------------------------------------------------
+  Feature           Method            Endpoint          Purpose
+  ----------------- ----------------- ----------------- -----------------
+  Question          `POST`            `/qa`             Answer academic
+  answering                                             questions
+
+  Concept           `POST`            `/explain`        Explain a topic
+  explanation                                           at a selected
+                                                        level
+
+  Quiz generation   `POST`            `/quiz`           Generate
+                                                        multiple-choice
+                                                        questions
+
+  Note              `POST`            `/summarize`      Summarize study
+  summarization                                         material in a
+                                                        selected format
+
+  Study roadmap     `POST`            `/recommend`      Create a learning
+                                                        roadmap based on
+                                                        goals
+
+  Health check      `GET`             `/health`         Check application
+                                                        status
+  -----------------------------------------------------------------------
+
+For exact request and response schemas, run the application and visit
+`/docs`.
+
+### Example request
+
+Generate a beginner-level explanation of binary search:
+
+``` bash
+curl -X POST "http://localhost:8000/explain" \
+  -H "Content-Type: application/json" \
+  -d '{
     "concept": "Binary Search",
     "level": "Beginner",
     "model_preference": "gemini"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "concept": "Binary Search",
-    "level": "Beginner",
-    "explanation": "Imagine you are searching for a name in a phone book...",
-    "model_used": "Gemini 1.5 Pro"
-  }
-  ```
-
-### 3. Quiz Generator
-- **Path**: `POST /quiz`
-- **Request Body**:
-  ```json
-  {
-    "topic": "Python Dicts",
-    "difficulty": "Medium",
-    "num_questions": 3,
-    "model_preference": "gemini"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "topic": "Python Dicts",
-    "difficulty": "Medium",
-    "questions": [
-      {
-        "questionText": "Which method removes all elements from a dictionary?",
-        "options": ["clear()", "remove()", "delete()", "pop()"],
-        "correctAnswer": "clear()",
-        "explanation": "The clear() method removes all items from the dictionary in-place."
-      }
-    ],
-    "model_used": "Gemini 1.5 Pro"
-  }
-  ```
-
-### 4. Text Summarization
-- **Path**: `POST /summarize`
-- **Request Body**:
-  ```json
-  {
-    "text": "Pasted notes content...",
-    "format": "Bullet-point",
-    "model_preference": "gemini"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "original_length": 523,
-    "summary_length": 128,
-    "summary": "- Key Point 1...\n- Key Point 2...",
-    "format": "Bullet-point",
-    "model_used": "Gemini 1.5 Pro"
-  }
-  ```
-
-### 5. Study Roadmap Recommendations
-- **Path**: `POST /recommend`
-- **Request Body**:
-  ```json
-  {
-    "topic": "FastAPI",
-    "skill_level": "Beginner",
-    "goals": "Build a REST API to serve database records",
-    "model_preference": "gemini"
-  }
-  ```
-- **Response**:
-  ```json
-  {
-    "topic": "FastAPI",
-    "skill_level": "Beginner",
-    "goals": "Build a REST API to serve database records",
-    "roadmap": [
-      {
-        "phase": "Phase 1: Setup",
-        "title": "Install and Run Hello World",
-        "description": "Install fastapi and uvicorn, run basic router",
-        "duration": "1 day"
-      }
-    ],
-    "resources": [
-      {
-        "name": "Official FastAPI Tutorial",
-        "type": "Course",
-        "description": "Best place to start learning decorators"
-      }
-    ],
-    "practice_suggestions": [
-      "Create a GET request returning JSON items"
-    ],
-    "model_used": "Gemini 1.5 Pro"
-  }
-  ```
-
-### 6. Health Check
-- **Path**: `GET /health`
-- **Response**:
-  ```json
-  {
-    "status": "operational",
-    "gemini_api_set": true,
-    "default_provider": "gemini",
-    "lamini_model_name": "MBZUAI/LaMini-Flan-T5-248M"
-  }
-  ```
-
----
-
-## Testing & Verification
-Unit tests are written using `unittest` and FastAPI's `TestClient` in `verify_endpoints.py`. Mocks are implemented to isolate testing from external network connections and GPU memory requirements.
-
-To run the verification suite:
-```bash
-.venv\Scripts\python verify_endpoints.py
+  }'
 ```
 
----
+The response structure depends on the endpoint and configured model. Use
+the interactive API documentation to inspect the current schemas.
 
-## Future Improvements
-- **Persistent Progress tracking**: Add databases (SQLite/PostgreSQL) to store student profiles, roadmaps, and completed quizzes.
-- **RAG Notes Upload**: Allow PDF upload and query notes directly via vector database integration (FAISS/Chroma).
-- **Interactive Speech**: Convert explanations to audio responses using TTS (Text-to-Speech) pipelines.
+## Testing
+
+The repository includes an endpoint verification script named
+`verify_endpoints.py`. The existing test suite uses Python's `unittest`
+and FastAPI's `TestClient`, with mocks intended to reduce dependence on
+external services.
+
+Run the verification script with:
+
+``` bash
+python verify_endpoints.py
+```
+
+## Deployment
+
+The application is available at:
+
+**https://edu-genai.onrender.com**
+
+The application's AI features may depend on correctly configured
+environment variables and the availability of the configured model
+providers. For a new deployment, configure secrets in the hosting
+provider rather than committing them to the repository.
+
+## Future Enhancements
+
+Potential areas for future development include:
+
+-   Persistent student profiles, learning progress, and quiz history.
+-   Retrieval-augmented generation (RAG) for querying uploaded study
+    notes.
+-   Text-to-speech support for spoken explanations.
+
+## Contributing
+
+Contributions and suggestions are welcome.
+
+1.  Fork the repository.
+2.  Create a branch for your changes.
+3.  Make and test your changes.
+4.  Submit a pull request describing the update.
+
